@@ -25,5 +25,8 @@ bower_components
 # Build files
 build
 
-#webstorm
+# Webstorm
 .idea
+
+# Publish to gh-pages
+.publish
