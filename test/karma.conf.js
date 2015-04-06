@@ -8,7 +8,7 @@ module.exports = function(config) {
   config.set({
 
     basePath: '../',
-    frameworks: ['jasmine', 'browserify'],
+    frameworks: ['jasmine', 'browserify', 'sinon'],
     preprocessors: {
       'app/js/**/*.js': ['browserify', 'babel', 'coverage']
     },

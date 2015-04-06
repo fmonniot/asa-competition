@@ -12,7 +12,7 @@ describe('Unit: ExampleCtrl', function() {
 
     // mock the controller
     angular.mock.inject(function($controller) {
-      ctrl = $controller('HomeCtrl');
+      ctrl = $controller('HomeController');
     });
   });
 
