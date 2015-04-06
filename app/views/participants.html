@@ -1,0 +1,26 @@
+<table>
+    <thead>
+    <tr>
+        <th data-field="first-name">First Name</th>
+        <th data-field="">Last Name</th>
+        <th data-field="">Gender</th>
+        <th data-field="">Club</th>
+        <th data-field="">License</th>
+        <th data-field="">Category</th>
+        <th data-field="">Bow Category</th>
+        <th data-field="">Squad</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="person in participants.list">
+        <td>{{ person.firstName }}</td>
+        <td>{{ person.lastName }}</td>
+        <td>{{ person.gender }}</td>
+        <td>{{ person.club }}</td>
+        <td>{{ person.license }}</td>
+        <td>{{ person.category }}</td>
+        <td>{{ person.bowCategory }}</td>
+        <td>{{ person.squad }}</td>
+    </tr>
+    </tbody>
+</table>

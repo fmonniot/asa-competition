@@ -1,0 +1,8 @@
+<div ng-repeat="squad in squads.list" style="border: 1px solid black;float: left;width: 40%;">
+    <h3>Squad no {{ squad.no }}</h3>
+    <span ng-repeat="participant in squad.participants" style="display:inline-block;">
+        {{ participant.gender === 'M' ? 'Mr' : 'Mme' }}
+        {{ participant.firstName }}
+        {{ participant.lastName }}
+    </span>
+</div>

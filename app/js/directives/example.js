@@ -2,7 +2,7 @@
 
 var directivesModule = require('./_index.js');
 
-class exampleDirective {
+class ExampleDirective {
 
     /**
      * @ngInject
@@ -18,4 +18,4 @@ class exampleDirective {
     }
 }
 
-directivesModule.directive('exampleDirective', exampleDirective);
+directivesModule.directive('exampleDirective', ExampleDirective);

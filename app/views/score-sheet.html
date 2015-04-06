@@ -1,0 +1,26 @@
+<table>
+    <thead>
+    <tr>
+        <th data-field="">Target</th>
+        <th data-field="" ng-repeat="person in sheet.participants">{{ person.name }}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="targetScore in sheet.scores">
+        <td>{{ $index + 1 }}</td>
+        <td ng-repeat="participantScore in targetScore">
+            <input type="text"
+                   ng-model="participantScore.arrow1"
+                   tabindex="{{ participantScore.tabindex }}"
+                    />
+            <input type="text"
+                   ng-model="participantScore.arrow2"
+                   ng-model-options="{updateOn: 'default blur', debounce: {'default':500, 'blur':0}}"
+                   ng-change="update()"
+                   ng-keyup="cancel($event, participantScore.arrow2)"
+                   tabindex="{{ participantScore.tabindex }}"
+                    />
+        </td>
+    </tr>
+    </tbody>
+</table>

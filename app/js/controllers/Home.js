@@ -2,7 +2,7 @@
 
 var controllersModule = require('./_index');
 
-class HomeCtrl {
+class HomeController {
 
     /**
      * @ngInject
@@ -13,4 +13,4 @@ class HomeCtrl {
     }
 }
 
-controllersModule.controller('HomeCtrl', HomeCtrl);
+controllersModule.controller('HomeController', HomeController);

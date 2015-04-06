@@ -8,12 +8,18 @@
       <meta name="description" content="">
       <meta name="viewport" content="width=device-width">
 
-      <link rel="stylesheet" href="css/main.css">
+      <link rel="stylesheet" href="/css/main.css">
   </head>
   <body>
+  <div>
+      <a ui-sref="Home">Home</a>
+      <a ui-sref="Participants({ competition: '3D-2015' })">Participants</a>
+      <a ui-sref="Squads({ competition: '3D-2015' })">Squads</a>
+      <a ui-sref="ScoreSheet({ competition: '3D-2015', squadNo: 1 })">Score Sheet</a>
+  </div>
 
       <div ui-view></div>
 
-      <script src="js/main.js"></script>
+      <script src="/js/main.js"></script>
   </body>
 </html>
