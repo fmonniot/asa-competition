@@ -1,5 +1,7 @@
 # ASA Competition
 
+[![Build Status](https://travis-ci.org/fmonniot/asa-competition.svg?branch=master)](https://travis-ci.org/fmonniot/asa-competition)
+
 A simple application to help http://archeragnetz.fr archery club manage their competition.
 
 ---
