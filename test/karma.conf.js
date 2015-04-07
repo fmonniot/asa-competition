@@ -5,7 +5,7 @@ var isparta = require('isparta');
 
 module.exports = function(config) {
 
-  config.set({
+  var configuration = {
 
     basePath: '../',
     frameworks: ['jasmine', 'browserify', 'sinon'],
@@ -45,8 +45,21 @@ module.exports = function(config) {
 
       // test files
       'test/unit/**/*.js'
-    ]
+    ],
 
-  });
 
+    customLaunchers: {
+      Chrome_travis_ci: {
+        base: 'Chrome',
+        flags: ['--no-sandbox']
+      }
+    }
+
+  };
+
+  if (process.env.TRAVIS) {
+    configuration.browsers = ['Chrome_travis_ci'];
+  }
+
+  config.set(configuration);
 };
