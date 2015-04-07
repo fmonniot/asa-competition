@@ -154,27 +154,27 @@ class Query {
   $lt(value) {
     this.keyRange = IDBKeyRange.upperBound(value, true);
     return this;
-  };
+  }
 
   $gt(value) {
     this.keyRange = IDBKeyRange.lowerBound(value, true);
     return this;
-  };
+  }
 
   $lte(value) {
     this.keyRange = IDBKeyRange.upperBound(value);
     return this;
-  };
+  }
 
   $gte(value) {
     this.keyRange = IDBKeyRange.lowerBound(value);
     return this;
-  };
+  }
 
   $eq(value) {
     this.keyRange = IDBKeyRange.only(value);
     return this;
-  };
+  }
 
   $between(low, hi, exLow, exHi) {
     if (exLow == null) {
@@ -185,22 +185,22 @@ class Query {
     }
     this.keyRange = IDBKeyRange.bound(low, hi, exLow, exHi);
     return this;
-  };
+  }
 
   $desc(unique) {
     this.direction = unique ? cursorDirection.prevunique : cursorDirection.prev;
     return this;
-  };
+  }
 
   $asc(unique) {
     this.direction = unique ? cursorDirection.nextunique : cursorDirection.next;
     return this;
-  };
+  }
 
   $index(indexName) {
     this.indexName = indexName;
     return this;
-  };
+  }
 
 }
 
@@ -594,7 +594,7 @@ class IndexedDBProvider {
   connection(databaseName) {
     this.dbName = databaseName;
     return this;
-  };
+  }
 
   /**
    @ngdoc function
@@ -610,127 +610,156 @@ class IndexedDBProvider {
    */
   upgradeDatabase(newVersion, callback) {
     this.upgradesByVersion[newVersion] = callback;
-    this.dbVersion = Math.max.apply(null, Object.keys(upgradesByVersion));
+    this.dbVersion = Math.max.apply(null, Object.keys(this.upgradesByVersion));
     return this;
-  };
+  }
 
   /**
    * @ngInject
    */
   $get($q, $rootScope) {
 
-      var rejectWithError = function (deferred) {
-        return function (error) {
-          return $rootScope.$apply(function () {
-            return deferred.reject(errorMessageFor(error));
-          });
-        };
+    var rejectWithError = function (deferred) {
+      return (error) => {
+        return $rootScope.$apply(() => {
+          return deferred.reject(errorMessageFor(error));
+        });
       };
+    };
 
-      var createDatabaseConnection = function () {
-        var dbReq, deferred;
-        deferred = $q.defer();
-        dbReq = indexedDB.open(dbName, dbVersion || 1);
-        dbReq.onsuccess = function () {
-          db = dbReq.result;
-          $rootScope.$apply(function () {
-            deferred.resolve(db);
-          });
-        };
-        dbReq.onblocked = dbReq.onerror = rejectWithError(deferred);
-        dbReq.onupgradeneeded = function (event) {
-          var tx;
-          db = event.target.result;
-          tx = event.target.transaction;
-          console.debug("$indexedDB: Upgrading database '" + db.name + "' from version " + event.oldVersion + " to version " + event.newVersion + " ...");
-          applyNeededUpgrades(event.oldVersion, event, db, tx);
-        };
-        return deferred.promise;
-      };
+    var createDatabaseConnection = () => {
+      var dbReq, deferred, db;
+      deferred = $q.defer();
 
-      var openDatabase = function () {
-        return dbPromise || (dbPromise = createDatabaseConnection());
-      };
+      dbReq = indexedDB.open(this.dbName, this.dbVersion || 1);
 
-      var closeDatabase = function () {
-        return openDatabase().then(function () {
-          db.close();
-          db = null;
-          return dbPromise = null;
+      dbReq.onsuccess = () => {
+        this.db = dbReq.result;
+        $rootScope.$apply(() => {
+          deferred.resolve(db);
         });
       };
 
-      var validateStoreNames = function (storeNames) {
-        var found, storeName, _i, _len;
-        found = true;
-        for (_i = 0, _len = storeNames.length; _i < _len; _i++) {
-          storeName = storeNames[_i];
-          found = found & db.objectStoreNames.contains(storeName);
-        }
-        return found;
+      dbReq.onblocked = dbReq.onerror = rejectWithError(deferred);
+
+      dbReq.onupgradeneeded = (event) => {
+        this.db = event.target.result;
+        let tx = event.target.transaction;
+        console.debug("$indexedDB: Upgrading database '" + db.name +
+        "' from version " + event.oldVersion +
+        " to version " + event.newVersion + " ...");
+        applyNeededUpgrades(event.oldVersion, event, db, tx);
       };
 
-      var openTransaction = function (storeNames, mode) {
+      return deferred.promise;
+    };
+
+    var openDatabase = () => {
+      return this.dbPromise || (this.dbPromise = createDatabaseConnection());
+    };
+
+    var closeDatabase = () => {
+      return openDatabase().then(() => {
+        db.close();
+        db = null;
+        return this.dbPromise = null;
+      });
+    };
+
+    var validateStoreNames = (storeNames) => {
+      let found = true;
+      for (let _i = 0, _len = storeNames.length; _i < _len; _i++) {
+        let storeName = storeNames[_i];
+        found = found & this.db.objectStoreNames.contains(storeName);
+      }
+      return found;
+    };
+
+    var openTransaction = (storeNames, mode) => {
+      if (mode == null) {
+        mode = dbMode.readonly;
+      }
+      return openDatabase().then(() => {
+        if (!validateStoreNames(storeNames)) {
+          return $q.reject("Object stores " + storeNames + " do not exist.");
+        }
+
+        var transaction = new Transaction(storeNames, mode);
+        addTransaction(transaction);
+        return transaction;
+      });
+    };
+
+    var keyRangeForOptions = (options) => {
+      if (options.beginKey && options.endKey) {
+        return IDBKeyRange.bound(options.beginKey, options.endKey);
+      }
+    };
+
+    var addTransaction = (transaction) => {
+      this.allTransactions.push(transaction.promise);
+      return transaction.promise["finally"](() => {
+        var index;
+        index = this.allTransactions.indexOf(transaction.promise);
+        if (index > -1) {
+          return this.allTransactions.splice(index, 1);
+        }
+      });
+    };
+
+    return {
+
+      /**
+       @ngdoc method
+       @name $indexedDB.openStore
+       @function
+
+       @description an IDBObjectStore to use
+
+       @params {string} storeName the name of the objectstore to use
+       @returns {object} ObjectStore
+       */
+      openStore: function (storeName, callBack, mode) {
         if (mode == null) {
-          mode = dbMode.readonly;
+          mode = dbMode.readwrite;
         }
-        return openDatabase().then(function () {
-          if (!validateStoreNames(storeNames)) {
-            return $q.reject("Object stores " + storeNames + " do not exist.");
-          }
-
-          let transaction = new Transaction(storeNames, mode);
-          addTransaction(transaction);
-          return transaction;
+        return openTransaction([storeName], mode).then(function (transaction) {
+          var results;
+          results = callBack(new ObjectStore(storeName, transaction));
+          return appendResultsToPromise(transaction.promise, results);
         });
-      };
+      },
 
-      var keyRangeForOptions = function (options) {
-        if (options.beginKey && options.endKey) {
-          return IDBKeyRange.bound(options.beginKey, options.endKey);
+      openStores: function (storeNames, callback, mode) {
+        if (mode == null) {
+          mode = dbMode.readwrite;
         }
-      };
-
-      var addTransaction = function (transaction) {
-        allTransactions.push(transaction.promise);
-        return transaction.promise["finally"](function () {
-          var index;
-          index = allTransactions.indexOf(transaction.promise);
-          if (index > -1) {
-            return allTransactions.splice(index, 1);
-          }
+        return openTransaction(storeNames, mode).then(function (transaction) {
+          var objectStores, results, storeName;
+          objectStores = (function () {
+            var _i, _len, _results;
+            _results = [];
+            for (_i = 0, _len = storeNames.length; _i < _len; _i++) {
+              storeName = storeNames[_i];
+              _results.push(new ObjectStore(storeName, transaction));
+            }
+            return _results;
+          })();
+          results = callback.apply(null, objectStores);
+          return appendResultsToPromise(transaction.promise, results);
         });
-      };
+      },
 
-      return {
-
-        /**
-         @ngdoc method
-         @name $indexedDB.openStore
-         @function
-
-         @description an IDBObjectStore to use
-
-         @params {string} storeName the name of the objectstore to use
-         @returns {object} ObjectStore
-         */
-        openStore: function (storeName, callBack, mode) {
-          if (mode == null) {
-            mode = dbMode.readwrite;
-          }
-          return openTransaction([storeName], mode).then(function (transaction) {
-            var results;
-            results = callBack(new ObjectStore(storeName, transaction));
-            return appendResultsToPromise(transaction.promise, results);
-          });
-        },
-
-        openStores: function (storeNames, callback, mode) {
-          if (mode == null) {
-            mode = dbMode.readwrite;
-          }
-          return openTransaction(storeNames, mode).then(function (transaction) {
-            var objectStores, results, storeName;
+      openAllStores: function (callback, mode) {
+        if (mode == null) {
+          mode = dbMode.readwrite;
+        }
+        return openDatabase().then((function (_this) {
+          return function () {
+            var objectStores, results, storeName, storeNames, transaction;
+            storeNames = Array.prototype.slice.apply(db.objectStoreNames);
+            transaction = new Transaction(storeNames, mode);
+            addTransaction(transaction);
             objectStores = (function () {
               var _i, _len, _results;
               _results = [];
@@ -742,114 +771,90 @@ class IndexedDBProvider {
             })();
             results = callback.apply(null, objectStores);
             return appendResultsToPromise(transaction.promise, results);
-          });
-        },
+          };
+        })(this));
+      },
 
-        openAllStores: function (callback, mode) {
-          if (mode == null) {
-            mode = dbMode.readwrite;
-          }
-          return openDatabase().then((function (_this) {
-            return function () {
-              var objectStores, results, storeName, storeNames, transaction;
-              storeNames = Array.prototype.slice.apply(db.objectStoreNames);
-              transaction = new Transaction(storeNames, mode);
-              addTransaction(transaction);
-              objectStores = (function () {
-                var _i, _len, _results;
-                _results = [];
-                for (_i = 0, _len = storeNames.length; _i < _len; _i++) {
-                  storeName = storeNames[_i];
-                  _results.push(new ObjectStore(storeName, transaction));
-                }
-                return _results;
-              })();
-              results = callback.apply(null, objectStores);
-              return appendResultsToPromise(transaction.promise, results);
-            };
-          })(this));
-        },
+      /**
+       @ngdoc method
+       @name $indexedDB.closeDatabase
+       @function
 
-        /**
-         @ngdoc method
-         @name $indexedDB.closeDatabase
-         @function
+       @description Closes the database for use and completes all transactions.
+       */
+      closeDatabase: function () {
+        return closeDatabase();
+      },
 
-         @description Closes the database for use and completes all transactions.
-         */
-        closeDatabase: function () {
-          return closeDatabase();
-        },
+      /**
+       @ngdoc method
+       @name $indexedDB.deleteDatabase
+       @function
 
-        /**
-         @ngdoc method
-         @name $indexedDB.deleteDatabase
-         @function
+       @description Closes and then destroys the current database.  Returns a promise that resolves when this is persisted.
+       */
+      deleteDatabase: function () {
+        return closeDatabase().then(function () {
+          var defer;
+          defer = new DbQ();
+          defer.resolveWith(indexedDB.deleteDatabase(dbName));
+          return defer.promise;
+        })["finally"](function () {
+          return console.debug("$indexedDB: " + dbName + " database deleted.");
+        });
+      },
 
-         @description Closes and then destroys the current database.  Returns a promise that resolves when this is persisted.
-         */
-        deleteDatabase: function () {
-          return closeDatabase().then(function () {
-            var defer;
-            defer = new DbQ();
-            defer.resolveWith(indexedDB.deleteDatabase(dbName));
-            return defer.promise;
-          })["finally"](function () {
-            return console.debug("$indexedDB: " + dbName + " database deleted.");
-          });
-        },
+      queryDirection: apiDirection,
 
-        queryDirection: apiDirection,
+      flush: function () {
+        if (allTransactions.length > 0) {
+          return $q.all(allTransactions);
+        } else {
+          return $q.when([]);
+        }
+      },
 
-        flush: function () {
-          if (allTransactions.length > 0) {
-            return $q.all(allTransactions);
-          } else {
-            return $q.when([]);
-          }
-        },
+      /**
+       @ngdoc method
+       @name $indexedDB.databaseInfo
+       @function
 
-        /**
-         @ngdoc method
-         @name $indexedDB.databaseInfo
-         @function
-
-         @description Returns information about this database.
-         */
-        databaseInfo: function () {
-          return openDatabase().then(function () {
-            var storeNames, transaction;
-            transaction = null;
-            storeNames = Array.prototype.slice.apply(db.objectStoreNames);
-            return openTransaction(storeNames, dbMode.readonly).then(function (transaction) {
-              var store, storeName, stores;
-              stores = (function () {
-                var _i, _len, _results;
-                _results = [];
-                for (_i = 0, _len = storeNames.length; _i < _len; _i++) {
-                  storeName = storeNames[_i];
-                  store = transaction.objectStore(storeName);
-                  _results.push({
-                    name: storeName,
-                    keyPath: store.keyPath,
-                    autoIncrement: store.autoIncrement,
-                    indices: Array.prototype.slice.apply(store.indexNames)
-                  });
-                }
-                return _results;
-              })();
-              return transaction.promise.then(function () {
-                return {
-                  name: db.name,
-                  version: db.version,
-                  objectStores: stores
-                };
-              });
+       @description Returns information about this database.
+       */
+      databaseInfo: function () {
+        return openDatabase().then(function () {
+          var storeNames, transaction;
+          transaction = null;
+          storeNames = Array.prototype.slice.apply(db.objectStoreNames);
+          return openTransaction(storeNames, dbMode.readonly).then(function (transaction) {
+            var store, storeName, stores;
+            stores = (function () {
+              var _i, _len, _results;
+              _results = [];
+              for (_i = 0, _len = storeNames.length; _i < _len; _i++) {
+                storeName = storeNames[_i];
+                store = transaction.objectStore(storeName);
+                _results.push({
+                  name: storeName,
+                  keyPath: store.keyPath,
+                  autoIncrement: store.autoIncrement,
+                  indices: Array.prototype.slice.apply(store.indexNames)
+                });
+              }
+              return _results;
+            })();
+            return transaction.promise.then(function () {
+              return {
+                name: db.name,
+                version: db.version,
+                objectStores: stores
+              };
             });
           });
-        }
-      };
-    }
+        });
+      }
+    };
+  }
 }
 
 servicesModule.provider('$indexedDB', IndexedDBProvider);
