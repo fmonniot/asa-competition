@@ -41,25 +41,25 @@ class Transaction {
   }
 
   setupCallbacks() {
-    this.transaction.oncomplete = (function (_this) {
-      return function () {
-        return $rootScope.$apply(function () {
+    this.transaction.oncomplete = ((_this) => {
+      return () => {
+        return $rootScope.$apply(() => {
           return _this.defer.resolve("Transaction Completed");
         });
       };
     })(this);
 
-    this.transaction.onabort = (function (_this) {
-      return function (error) {
-        return $rootScope.$apply(function () {
+    this.transaction.onabort = ((_this) => {
+      return (error) => {
+        return $rootScope.$apply(() => {
           return _this.defer.reject("Transaction Aborted", error);
         });
       };
     })(this);
 
-    this.transaction.onerror = (function (_this) {
-      return function (error) {
-        return $rootScope.$apply(function () {
+    this.transaction.onerror = ((_this) => {
+      return (error) => {
+        return $rootScope.$apply(() => {
           return _this.defer.reject("Transaction Error", error);
         });
       };
@@ -85,8 +85,8 @@ class DbQ {
   reject() {
     let args;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    return $rootScope.$apply((function (_this) {
-      return function () {
+    return $rootScope.$apply(((_this) => {
+      return () => {
         var _ref;
         return (_ref = _this.q).reject.apply(_ref, args);
       };
@@ -94,8 +94,8 @@ class DbQ {
   }
 
   rejectWith(req) {
-    return req.onerror = req.onblocked = (function (_this) {
-      return function (e) {
+    return req.onerror = req.onblocked = ((_this) => {
+      return (e) => {
         return _this.reject(errorMessageFor(e));
       };
     })(this);
@@ -104,8 +104,8 @@ class DbQ {
   resolve() {
     var args;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    return $rootScope.$apply((function (_this) {
-      return function () {
+    return $rootScope.$apply(((_this) => {
+      return () => {
         var _ref;
         return (_ref = _this.q).resolve.apply(_ref, args);
       };
@@ -115,8 +115,8 @@ class DbQ {
   notify() {
     var args;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    return $rootScope.$apply((function (_this) {
-      return function () {
+    return $rootScope.$apply(((_this) => {
+      return () => {
         var _ref;
         return (_ref = _this.q).notify.apply(_ref, args);
       };
@@ -124,9 +124,9 @@ class DbQ {
   }
 
   dbErrorFunction() {
-    return (function (_this) {
-      return function (error) {
-        return $rootScope.$apply(function () {
+    return ((_this) => {
+      return (error) => {
+        return $rootScope.$apply(() => {
           return _this.q.reject(errorMessageFor(error));
         });
       };
@@ -135,8 +135,8 @@ class DbQ {
 
   resolveWith(req) {
     this.rejectWith(req);
-    return req.onsuccess = (function (_this) {
-      return function (e) {
+    return req.onsuccess = ((_this) => {
+      return (e) => {
         return _this.resolve(e.target.result);
       };
     })(this);
@@ -227,7 +227,7 @@ class ObjectStore {
     }
     results = [];
     defer.rejectWith(req);
-    return req.onsuccess = function (e) {
+    return req.onsuccess = (e) => {
       var cursor;
       if (cursor = e.target.result) {
         results.push(mapFunc(cursor));
@@ -250,7 +250,7 @@ class ObjectStore {
       req = mapFunc(item);
       results = [];
       defer.rejectWith(req);
-      req.onsuccess = function (e) {
+      req.onsuccess = (e) => {
         results.push(e.target.result);
         defer.notify(e.target.result);
         if (results.length >= data.length) {
@@ -281,7 +281,7 @@ class ObjectStore {
       req = this.store.getAllKeys();
       defer.resolveWith(req);
     } else {
-      this._mapCursor(defer, function (cursor) {
+      this._mapCursor(defer, (cursor) => {
         return cursor.key;
       });
     }
@@ -336,8 +336,8 @@ class ObjectStore {
    @returns {Q} A promise that this can be done successfully.
    */
   upsert(data) {
-    return this._arrayOperation(data, (function (_this) {
-      return function (item) {
+    return this._arrayOperation(data, ((_this) => {
+      return (item) => {
         return _this.store.put(item);
       };
     })(this));
@@ -355,8 +355,8 @@ class ObjectStore {
    @returns {Q} A promise that this can be done successfully.
    */
   insert(data) {
-    return this._arrayOperation(data, (function (_this) {
-      return function (item) {
+    return this._arrayOperation(data, ((_this) => {
+      return (item) => {
         return _this.store.add(item);
       };
     })(this));
@@ -378,7 +378,7 @@ class ObjectStore {
     if (this.store.getAll) {
       defer.resolveWith(this.store.getAll());
     } else {
-      this._mapCursor(defer, function (cursor) {
+      this._mapCursor(defer, (cursor) => {
         return cursor.value;
       });
     }
@@ -392,7 +392,7 @@ class ObjectStore {
     keyRange = query.keyRange;
     direction = query.direction;
     req = indexName ? this.store.index(indexName).openCursor(keyRange, direction) : this.store.openCursor(keyRange, direction);
-    this._mapCursor(defer, (function (cursor) {
+    this._mapCursor(defer, ((cursor) => {
       return cursor.value;
     }), req);
     return defer.promise;
@@ -483,8 +483,8 @@ class ObjectStore {
     defer = this.defer();
     req = this.store.get(key);
     defer.rejectWith(req);
-    req.onsuccess = (function (_this) {
-      return function (e) {
+    req.onsuccess = ((_this) => {
+      return (e) => {
         if (e.target.result) {
           return defer.resolve(e.target.result);
         } else {
@@ -572,7 +572,7 @@ class IndexedDBProvider {
    */
   static appendResultsToPromise(promise, results) {
     if (results !== void 0) {
-      return promise.then(function () {
+      return promise.then(() => {
         return results;
       });
     } else {
@@ -619,7 +619,7 @@ class IndexedDBProvider {
    */
   $get($q, $rootScope) {
 
-    var rejectWithError = function (deferred) {
+    var rejectWithError = (deferred) => {
       return (error) => {
         return $rootScope.$apply(() => {
           return deferred.reject(errorMessageFor(error));
@@ -628,7 +628,7 @@ class IndexedDBProvider {
     };
 
     var createDatabaseConnection = () => {
-      var dbReq, deferred, db;
+      var dbReq, deferred;
       deferred = $q.defer();
 
       dbReq = indexedDB.open(this.dbName, this.dbVersion || 1);
@@ -636,7 +636,7 @@ class IndexedDBProvider {
       dbReq.onsuccess = () => {
         this.db = dbReq.result;
         $rootScope.$apply(() => {
-          deferred.resolve(db);
+          deferred.resolve(this.db);
         });
       };
 
@@ -645,10 +645,10 @@ class IndexedDBProvider {
       dbReq.onupgradeneeded = (event) => {
         this.db = event.target.result;
         let tx = event.target.transaction;
-        console.debug("$indexedDB: Upgrading database '" + db.name +
+        console.debug("$indexedDB: Upgrading database '" + this.db.name +
         "' from version " + event.oldVersion +
         " to version " + event.newVersion + " ...");
-        applyNeededUpgrades(event.oldVersion, event, db, tx);
+        applyNeededUpgrades(event.oldVersion, event, this.db, tx);
       };
 
       return deferred.promise;
@@ -660,8 +660,8 @@ class IndexedDBProvider {
 
     var closeDatabase = () => {
       return openDatabase().then(() => {
-        db.close();
-        db = null;
+        this.db.close();
+        this.db = null;
         return this.dbPromise = null;
       });
     };
@@ -719,24 +719,25 @@ class IndexedDBProvider {
        @params {string} storeName the name of the objectstore to use
        @returns {object} ObjectStore
        */
-      openStore: function (storeName, callBack, mode) {
+      openStore: (storeName, callBack, mode) => {
         if (mode == null) {
           mode = dbMode.readwrite;
         }
-        return openTransaction([storeName], mode).then(function (transaction) {
+        return openTransaction([storeName], mode).then((transaction) => {
           var results;
           results = callBack(new ObjectStore(storeName, transaction));
           return appendResultsToPromise(transaction.promise, results);
         });
       },
 
-      openStores: function (storeNames, callback, mode) {
+      openStores: (storeNames, callback, mode) => {
         if (mode == null) {
           mode = dbMode.readwrite;
         }
-        return openTransaction(storeNames, mode).then(function (transaction) {
+        return openTransaction(storeNames, mode).then((transaction) => {
           var objectStores, results, storeName;
-          objectStores = (function () {
+
+          objectStores = (() => {
             var _i, _len, _results;
             _results = [];
             for (_i = 0, _len = storeNames.length; _i < _len; _i++) {
@@ -745,22 +746,25 @@ class IndexedDBProvider {
             }
             return _results;
           })();
+
           results = callback.apply(null, objectStores);
           return appendResultsToPromise(transaction.promise, results);
         });
       },
 
-      openAllStores: function (callback, mode) {
+      openAllStores: (callback, mode) => {
         if (mode == null) {
           mode = dbMode.readwrite;
         }
-        return openDatabase().then((function (_this) {
-          return function () {
-            var objectStores, results, storeName, storeNames, transaction;
-            storeNames = Array.prototype.slice.apply(db.objectStoreNames);
-            transaction = new Transaction(storeNames, mode);
+        return openDatabase().then( () => {
+          return () => {
+            var results, storeName;
+            let storeNames = Array.prototype.slice.apply(this.db.objectStoreNames);
+            let transaction = new Transaction(storeNames, mode);
+
             addTransaction(transaction);
-            objectStores = (function () {
+
+            let objectStores = (() => {
               var _i, _len, _results;
               _results = [];
               for (_i = 0, _len = storeNames.length; _i < _len; _i++) {
@@ -769,10 +773,11 @@ class IndexedDBProvider {
               }
               return _results;
             })();
+
             results = callback.apply(null, objectStores);
             return appendResultsToPromise(transaction.promise, results);
           };
-        })(this));
+        });
       },
 
       /**
@@ -782,7 +787,7 @@ class IndexedDBProvider {
 
        @description Closes the database for use and completes all transactions.
        */
-      closeDatabase: function () {
+      closeDatabase: () => {
         return closeDatabase();
       },
 
@@ -793,22 +798,23 @@ class IndexedDBProvider {
 
        @description Closes and then destroys the current database.  Returns a promise that resolves when this is persisted.
        */
-      deleteDatabase: function () {
-        return closeDatabase().then(function () {
+      deleteDatabase: () => {
+        return closeDatabase().then(() => {
           var defer;
           defer = new DbQ();
-          defer.resolveWith(indexedDB.deleteDatabase(dbName));
+          defer.resolveWith(indexedDB.deleteDatabase(this.dbName));
           return defer.promise;
-        })["finally"](function () {
-          return console.debug("$indexedDB: " + dbName + " database deleted.");
+        })["finally"](() => {
+          return console.debug("$indexedDB: " + this.dbName + " database deleted.");
         });
       },
 
       queryDirection: apiDirection,
 
-      flush: function () {
-        if (allTransactions.length > 0) {
-          return $q.all(allTransactions);
+      flush: () => {
+        console.log("flush",this);
+        if (this.allTransactions.length > 0) {
+          return $q.all(this.allTransactions);
         } else {
           return $q.when([]);
         }
@@ -821,14 +827,13 @@ class IndexedDBProvider {
 
        @description Returns information about this database.
        */
-      databaseInfo: function () {
-        return openDatabase().then(function () {
-          var storeNames, transaction;
-          transaction = null;
-          storeNames = Array.prototype.slice.apply(db.objectStoreNames);
-          return openTransaction(storeNames, dbMode.readonly).then(function (transaction) {
-            var store, storeName, stores;
-            stores = (function () {
+      databaseInfo: () => {
+        return openDatabase().then(() => {
+          let storeNames = Array.prototype.slice.apply(this.db.objectStoreNames);
+          return openTransaction(storeNames, dbMode.readonly).then((transaction) => {
+            let store, storeName;
+
+            let stores = (() => {
               var _i, _len, _results;
               _results = [];
               for (_i = 0, _len = storeNames.length; _i < _len; _i++) {
@@ -843,10 +848,11 @@ class IndexedDBProvider {
               }
               return _results;
             })();
-            return transaction.promise.then(function () {
+
+            return transaction.promise.then(() => {
               return {
-                name: db.name,
-                version: db.version,
+                name: this.db.name,
+                version: this.db.version,
                 objectStores: stores
               };
             });
